@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Limpieza Llenadora-Premix · LL/10</title>
+<style>
+  :root{
+    --orange:#FD980D;
+    --green:#00B354;
+    --blue:#0078d4;
+    --dark:#1c1c1c;
+    --gray-bg:#f4f4f5;
+    --gray-border:#e2e2e5;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; font-family:-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+    background:var(--gray-bg); color:var(--dark);
+  }
+  header{
+    background:linear-gradient(90deg,var(--orange),#ffb347);
+    padding:20px 24px; color:white;
+  }
+  header h1{margin:0; font-size:20px;}
+  header p{margin:4px 0 0; font-size:13px; opacity:.9;}
+  .container{max-width:720px; margin:0 auto; padding:20px;}
+  .card{
+    background:white; border-radius:12px; padding:20px;
+    box-shadow:0 1px 4px rgba(0,0,0,.08); margin-bottom:16px;
+  }
+  label{font-size:13px; font-weight:600; color:#555; display:block; margin-bottom:6px;}
+  input[list]{
+    width:100%; padding:12px 14px; font-size:16px; border-radius:8px;
+    border:1.5px solid var(--gray-border); margin-bottom:14px; background:white;
+  }
+  input[list]:focus{outline:none; border-color:var(--orange);}
+  
+  /* Layout de botones en paralelo */
+  .button-group{
+    display:flex;
+    gap:10px;
+  }
+  .btn{
+    flex:1;
+    padding:13px;
+    font-size:15px;
+    font-weight:700;
+    color:white;
+    border:none;
+    border-radius:8px;
+    cursor:pointer;
+    text-align:center;
+    text-decoration:none;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    transition:opacity 0.2s;
+  }
+  .btn:hover{opacity:.92;}
+  .btn-primary{background:var(--green);}
+  .btn-idle{background:var(--blue);}
+
+  .result{
+    margin-top:16px; border-radius:10px; padding:16px 18px; font-size:15px; line-height:1.5;
+  }
+  .result.ok{background:#e6f8ee; border:1.5px solid var(--green);}
+  .result.warn{background:#fff4e0; border:1.5px solid var(--orange);}
+  .result.danger{background:#fdeaea; border:1.5px solid #e14b4b;}
+  .result.unknown{background:#eee; border:1.5px solid #bbb;}
+  .result h3{margin:0 0 8px; font-size:15px;}
+  .badge{
+    display:inline-block; font-size:11px; font-weight:700; text-transform:uppercase;
+    padding:3px 8px; border-radius:20px; margin-bottom:8px;
+  }
+  .badge.ok{background:var(--green); color:white;}
+  .badge.warn{background:var(--orange); color:white;}
+  .badge.danger{background:#e14b4b; color:white;}
+  .badge.unknown{background:#999; color:white;}
+  .notes{margin-top:10px; padding-top:10px; border-top:1px dashed #ccc; font-size:13.5px;}
+  .notes li{margin-bottom:5px;}
+  .disclaimer{
+    font-size:12px; color:#7a5000; background:#fff8ea; border:1px solid #ffe0a3;
+    border-radius:8px; padding:10px 12px; margin-top:6px;
+  }
+</style>
+</head>
+<body>
+<header>
+  <h1>Limpieza Llenadora–Premix L9</h1>
+  <p>Ref. documento LL/10 · Ed. 217 (26/06/2026) · Refresco Marcilla</p>
+</header>
+
+<div class="container">
+  <div class="card">
+    <label for="origen">Jarabe / producto ACTUAL (código G0...)</label>
+    <input list="codes" id="origen" placeholder="Ej: G001027" autocomplete="off">
+
+    <label for="destino">Jarabe / producto SIGUIENTE (código G0...)</label>
+    <input list="codes" id="destino" placeholder="Ej: G000837" autocomplete="off">
+
+    <datalist id="codes"></datalist>
+
+    <div class="button-group">
+      <button class="btn btn-primary" onclick="consultar()">Consultar limpieza</button>
+      <a class="btn btn-idle" href="https://refresco.sharepoint.com/:x:/r/sites/IBE-PEX-PEXMARCILLA/_layouts/15/Doc.aspx?action=edit&sourcedoc=%7B99c9ebd1-4764-4944-b8ab-bb58f76a2148%7D&wdExp=TEAMS-TREATMENT&web=1&TeamsCID=73d8fc84-c560-4522-8f76-0467530a48b3" target="_blank" rel="noopener">
+        📊 Registrar IDLE
+      </a>
+    </div>
+
+    <div id="resultado"></div>
+  </div>
+
+  <div class="disclaimer">
+    ⚠️ Recuerda registrar los tiempos de limpieza en la tabla <b>IDLE</b> para mantener el control de costes y desviaciones frente al tiempo estándar.
+  </div>
+</div>
+
+<script>
+// ---------------------------------------------------------------
+// BASE DE DATOS extraída de LL/10 Ed.217 + Marcas de Perfil Energético / Light
+// ---------------------------------------------------------------
+const subgroups = [
+  {id:'colas_a', category:'Colas', label:'a) Light', isLight:true, multiBox:true,
+    boxes:[
+      {id:0, codes:['G001387','G000772','G000849','G000811']},
+      {id:1, codes:['G000881','G001352']},
+      {id:2, codes:['G000024','G000540','G000670','G001389']},
+      {id:3, codes:['G001585']},
+      {id:4, codes:['G000882']},
+      {id:5, codes:['G001584']},
+    ],
+    links:[[0,1],[1,2]]
+  },
+  {id:'colas_b', category:'Colas', label:'b) Normal', isLight:false, multiBox:true,
+    boxes:[
+      {id:0, codes:['G001027']},
+      {id:1, codes:['G000837','G001208','G001337','G001339','G001351','G001429','G001637']},
+      {id:2, codes:['G000461']},
+      {id:3, codes:['G000460']},
+    ],
+    links:[[0,1],[0,2],[1,3],[2,3]]
+  },
+  {id:'naranjas_c', category:'Naranjas', label:'c) Light', isLight:true, multiBox:true,
+    boxes:[
+      {id:0, codes:['G000905','G001154','G001180','G001632','G000683','G000889']},
+      {id:1, codes:['G000522','G000765','G000773','G000797']},
+      {id:2, codes:['G000761']},
+      {id:3, codes:['G000372','G001191','G001433']},
+    ],
+    links:[[0,1],[1,2]]
+  },
+  {id:'naranjas_d', category:'Naranjas', label:'d) Normal', isLight:false, multiBox:true,
+    boxes:[
+      {id:0, codes:['G000057']},
+      {id:1, codes:['G001190']},
+      {id:2, codes:['G001115']},
+      {id:3, codes:['G001166']},
+      {id:4, codes:['G001322']},
+      {id:5, codes:['G001490']},
+      {id:6, codes:['G000752','G001167','G001518','G001631']},
+    ],
+    links:[[0,1],[1,2],[1,3],[3,4],[4,5]],
+    notes:{
+      'G001490':'Para salir de este jarabe: lavado con agua caliente. NO poner filtro en la llenadora.'
+    }
+  },
+  {id:'limones_e', category:'Limones', label:'e) Light', isLight:true, multiBox:true,
+    boxes:[{id:0, codes:['G001182']},{id:1, codes:['G001634','G000601','G000762']}],
+    links:[[0,1]]
+  },
+  {id:'limones_f', category:'Limones', label:'f) Normal', isLight:false, multiBox:true,
+    boxes:[{id:0, codes:['G000251']},{id:1, codes:['G000714','G000268','G000822','G000856','G000753','G001106','G000892','G001160','G001519','G001181','G001633','G001321','G001345']}],
+    links:[[0,1]]
+  },
+  {id:'tonica_g', category:'Tónica', label:'g)', isLight:false, multiBox:true,
+    boxes:[
+      {id:0, codes:['G000379']},
+      {id:1, codes:['G001398','G000615','G000538','G000843','G000877','G001100','G001104','G000604','G000738','G000613','G000605','G000636','G000723']},
+      {id:2, codes:['G000718']},
+      {id:3, codes:['G000834','G000912']},
+    ],
+    links:[[0,1],[2,3]]
+  },
+  {id:'lima_limon_light', category:'Lima-Limón', label:'h) Light', isLight:true, multiBox:false,
+    boxes:[{id:0, codes:['G000803','G001112','G001192','G001162','G001031','G001372','G001500','G001546']}],
+    notes:{'G001031':'Jarabe de aminoácidos.'},
+    groupNote:'Justo antes de entrar en sabor lima-limón: CIP 5 pasos con sosa a 85ºC.'
+  },
+  {id:'lima_limon', category:'Lima-Limón', label:'i) Normal', isLight:false, multiBox:false,
+    boxes:[{id:0, codes:['G000330','G000675','G000853','G000802','G001101','G001161','G001466']}],
+    groupNote:'Justo antes de entrar en sabor lima-limón: CIP 5 pasos con sosa a 85ºC.'
+  },
+  {id:'gaseosa', category:'Gaseosa', label:'j)', isLight:true, multiBox:true,
+    boxes:[
+      {id:0, codes:['G000902','G001001']},
+      {id:1, codes:['G000518','G000614']},
+      {id:2, codes:['G000028','G000989','G001234','G001587']},
+    ],
+    links:[[0,1],[1,2]]
+  },
+  {id:'bitter', category:'Bitter', label:'k)', isLight:false, multiBox:false, boxes:[{id:0, codes:['G000691']}]},
+  {id:'te', category:'Té', label:'l)', isLight:false, multiBox:false, boxes:[{id:0, codes:[]}],
+    groupNote:'Lavar siempre de un té a otro.'
+  },
+  {id:'energetica', category:'Bebida Energética', label:'m)', isEnergy:true, isLight:false, multiBox:false,
+    boxes:[{id:0, codes:['G001142','G000627','G000749','G000824','G001147','G001432']}],
+    notes:{
+      'G000627':'Para salir de este jarabe: CIP SOSA 5 pasos.',
+      'G000749':'Para salir de este jarabe: CIP SOSA 5 pasos.',
+      'G000824':'Para salir de este jarabe: CIP SOSA 5 pasos.',
+      'G001147':'Para salir de este jarabe: CIP SOSA 5 pasos.',
+      'G001432':'Para salir de este jarabe: CIP SOSA 5 pasos.',
+      'G001142':'Producto HALAL: para ENTRAR, hacer siempre CIP SOSA 3 pasos.'
+    },
+    groupNote:'Para pasar de una energética a otra: limpieza con agua fría (automático). De energética a cualquier OTRO producto: CIP SOSA 5 pasos.'
+  },
+  {id:'mango', category:'Bebida Mango', label:'n)', isLight:false, multiBox:false,
+    boxes:[{id:0, codes:['G001399','G001123','G001139','G001262','G001463']}],
+    notes:{
+      'G001399':'Para salir de este jarabe: lavado agua caliente.',
+      'G001123':'Para salir de este jarabe: lavado agua caliente.',
+      'G001139':'Para salir de este jarabe: lavado agua caliente.',
+      'G001463':'Para salir de este jarabe: lavado agua caliente.'
+    }
+  },
+  {id:'mango_light', category:'Bebida Mango Light', label:'', isLight:true, multiBox:false,
+    boxes:[{id:0, codes:['G001547']}],
+    notes:{'G001547':'Para salir de este jarabe: lavado agua caliente.'}
+  },
+  {id:'coco', category:'Sabor Coco', label:'', isLight:false, multiBox:false,
+    boxes:[{id:0, codes:['G001120','G001292']}],
+    notes:{'G001120':'Para salir de este jarabe: lavado agua caliente.'}
+  },
+  {id:'mojito', category:'Mojito', label:'ñ)', isLight:false, multiBox:false, boxes:[{id:0, codes:['G001138']}]},
+  {id:'cheesecake', category:'Cheesecake', label:'o)', isLight:false, multiBox:false, boxes:[{id:0, codes:['G001171','G001144']}]},
+  {id:'mora', category:'Mora', label:'p)', isLight:false, multiBox:false, boxes:[{id:0, codes:['G001165','G001333','G001552']}]},
+  {id:'deportistas', category:'Bebida Deportistas', label:'q)', isLight:false, multiBox:false, boxes:[{id:0, codes:[]}],
+    groupNote:'Lavar siempre de una bebida para deportistas a otra.'
+  },
+  {id:'kiwi', category:'Kiwi', label:'r)', isLight:false, multiBox:false, boxes:[{id:0, codes:['G001170']}],
+    notes:{'G001170':'Para salir de este jarabe: lavado agua caliente.'}
+  },
+  {id:'pina_tropical', category:'Piña Tropical', label:'s)', isLight:false, multiBox:false,
+    boxes:[{id:0, codes:['G001308','G000875','G001241','G000844']}],
+    notes:{'G001241':'Después de llenar: agua caliente + muestra de laboratorio. Llenar SIN filtro de bolsa, solo metálico 1mm.'}
+  },
+  {id:'apple_melon', category:'Apple-Melon', label:'u)', isLight:false, multiBox:false,
+    boxes:[{id:0, codes:['G001178']}],
+    notes:{'G001178':'Para salir de este jarabe: lavado agua caliente.'}
+  },
+  {id:'pina_zero', category:'Piña Zero', label:'v)', isLight:true, isEnergy:true, multiBox:false, boxes:[{id:0, codes:['G001481']}]},
+  {id:'pina_coco', category:'Piña-Coco', label:'V)', isLight:false, multiBox:false,
+    boxes:[{id:0, codes:['G001143','G001177']}],
+    groupNote:'Para salir de G001143 o G001177: lavado agua caliente. Entre ellos: lavado cambio de sabor.'
+  },
+  {id:'melocoton', category:'Melocotón', label:'W)', isLight:false, multiBox:false,
+    boxes:[{id:0, codes:['G001209']}],
+    notes:{'G001209':'Para salir: si el siguiente es energética, lavado cambio de sabor; si es refresco, agua caliente.'}
+  },
+  {id:'lemon_zero', category:'Lemon Zero', label:'x)', isLight:true, isEnergy:true, multiBox:false, boxes:[{id:0, codes:['G001425']}]},
+  {id:'peach_mix_zero', category:'Peach Mix Zero', label:'y)', isLight:true, multiBox:false,
+    boxes:[{id:0, codes:['G001426']}],
+    notes:{'G001426':'Para salir de este jarabe: lavado agua caliente.'}
+  },
+  {id:'watermelon', category:'Water-Melon', label:'Z)', isLight:false, multiBox:false,
+    boxes:[{id:0, codes:['G001315','G001373','G001379']}],
+    groupNote:'Para salir: lavado agua caliente.'
+  },
+  {id:'fresa', category:'Fresa', label:'AA)', isLight:false, multiBox:true,
+    boxes:[{id:0, codes:['G001332']},{id:1, codes:['G001374']},{id:2, codes:['G001145']}],
+    links:[[0,1]],
+    notes:{'G001145':'Perfil energético.'}
+  },
+  {id:'fresa_light', category:'Fresa Light', label:'AB)', isLight:true, multiBox:false, boxes:[{id:0, codes:['G001427']}]},
+  {id:'fresa_lima_light', category:'Fresa-Lima Light', label:'AC)', isLight:true, multiBox:false, boxes:[{id:0, codes:['G001548']}]},
+  {id:'postobon', category:'Postobón', label:'AD)', isLight:false, multiBox:false,
+    boxes:[{id:0, codes:['G000708','G001336','G001541','G000709','G000832','G000831','G001626','G000833','G000884','G000883','G000885','G000903','G000904']}],
+    groupNote:'Para ENTRAR y SALIR de Postobón: siempre CIP completo sosa 5 pasos. Lavado agua fría solo entre sabores Postobón siguiendo orden Manzana-Colombiana-Tamarindo-Kola-Uva.'
+  },
+  {id:'manzana', category:'Manzana', label:'AE)', isLight:false, multiBox:false,
+    boxes:[{id:0, codes:['G000630','G001240']}],
+    groupNote:'Para salir: lavado agua caliente.'
+  },
+  {id:'cotton_candy', category:'Cotton Candy', label:'AF)', isLight:false, multiBox:false, boxes:[{id:0, codes:['G001370']}]},
+  {id:'pera', category:'Pera', label:'AG)', isLight:false, multiBox:false, boxes:[{id:0, codes:['G001371']}]},
+  {id:'nata_fresa', category:'Nata y Fresa', label:'AH)', isLight:false, multiBox:false,
+    boxes:[{id:0, codes:['G001414','G001413']}],
+    groupNote:'Para salir: 2 lavados de agua fría.'
+  },
+  {id:'melocoton_frambuesa', category:'Melocotón y Frambuesa', label:'AJ)', isLight:false, multiBox:false,
+    boxes:[{id:0, codes:['G001416','G001415']}],
+    groupNote:'Para salir: 2 lavados de agua fría.'
+  },
+  {id:'naturis', category:'Naturis Refresco', label:'AK)', isLight:false, multiBox:false,
+    boxes:[{id:0, codes:['G001383','G001496','G001385','G001384','G001498','G001497']}],
+    groupNote:'Para salir G001383/G001496: agua fría. Para salir G001385/G001384/G001497/G001498: agua caliente.'
+  },
+  {id:'manzana_melon', category:'Manzana-Melón', label:'AL)', isLight:false, multiBox:false,
+    boxes:[{id:0, codes:['G001380']}],
+    notes:{'G001380':'Para salir: 2 lavados con agua fría.'}
+  },
+  {id:'cereza', category:'Cereza', label:'AM)', isLight:false, multiBox:false,
+    boxes:[{id:0, codes:['G001417']}],
+    notes:{'G001417':'Para salir: lavado con agua caliente.'}
+  },
+  {id:'pintalenguas', category:'Pintalenguas', label:'AN)', isLight:false, multiBox:false,
+    boxes:[{id:0, codes:['G001418']}],
+    notes:{'G001418':'Para salir: lavado con agua fría.'}
+  },
+  {id:'ultra_white', category:'Ultra White-Katrine', label:'AÑ)', isLight:true, multiBox:false, boxes:[{id:0, codes:['G001522','G001555']}]},
+  {id:'frambuesa', category:'Frambuesa', label:'AO)', isLight:false, multiBox:false, boxes:[{id:0, codes:['G001562']}]},
+  {id:'banana', category:'Banana', label:'AP)', isLight:false, multiBox:false, boxes:[{id:0, codes:['G001561']}]},
+  {id:'berries', category:'Berries', label:'AQ)', isLight:false, multiBox:false,
+    boxes:[{id:0, codes:['G001582']}],
+    notes:{'G001582':'Para salir: lavado agua caliente.'}
+  },
+  {id:'melocoton_uva', category:'Melocotón-Uva', label:'AR)', isLight:false, multiBox:false, boxes:[{id:0, codes:['G001601']}]},
+  {id:'melow_zero', category:'Melow Zero', label:'AR)', isLight:true, multiBox:false, boxes:[{id:0, codes:['G001621']}]},
+];
+
+const energyCodes = new Set(['G001145', 'G001481', 'G001425']);
+
+const index = {};
+subgroups.forEach(sg=>{
+  sg.boxes.forEach(box=>{
+    box.codes.forEach(code=>{
+      const isEnergy = sg.isEnergy || energyCodes.has(code);
+      index[code] = {sg, boxId: box.id, isEnergy};
+    });
+  });
+});
+
+const datalist = document.getElementById('codes');
+Object.keys(index).sort().forEach(code=>{
+  const opt = document.createElement('option');
+  opt.value = code;
+  datalist.appendChild(opt);
+});
+
+// Función ajustada para evaluar dirección estricta
+function findLinkPath(sg, fromBox, toBox){
+  if(fromBox === toBox) return 'same';
+  if(!sg.links) return null;
+
+  // Comprobar dirección adelante (forward)
+  let visitedForward = new Set([fromBox]);
+  let queue = [fromBox];
+  while(queue.length){
+    let next = [];
+    for(let b of queue){
+      for(let l of sg.links){
+        if(l[0] === b && !visitedForward.has(l[1])){
+          if(l[1] === toBox) return 'forward';
+          visitedForward.add(l[1]);
+          next.push(l[1]);
+        }
+      }
+    }
+    queue = next;
+  }
+
+  // Comprobar dirección atrás (reverse)
+  let visitedReverse = new Set([fromBox]);
+  queue = [fromBox];
+  while(queue.length){
+    let next = [];
+    for(let b of queue){
+      for(let l of sg.links){
+        if(l[1] === b && !visitedReverse.has(l[0])){
+          if(l[0] === toBox) return 'reverse';
+          visitedReverse.add(l[0]);
+          next.push(l[0]);
+        }
+      }
+    }
+    queue = next;
+  }
+
+  return null;
+}
+
+function renderResult(cssClass, badgeText, title, bodyHtml, notesArr){
+  const el = document.getElementById('resultado');
+  let notesHtml = '';
+  if(notesArr && notesArr.length){
+    notesHtml = '<div class="notes"><strong>Notas / excepciones aplicables:</strong><ul>' +
+      notesArr.map(n=>'<li>'+n+'</li>').join('') + '</ul></div>';
+  }
+  el.innerHTML = `<div class="result ${cssClass}">
+      <span class="badge ${cssClass}">${badgeText}</span>
+      <h3>${title}</h3>
+      <div>${bodyHtml}</div>
+      ${notesHtml}
+    </div>`;
+}
+
+function consultar(){
+  const origen = document.getElementById('origen').value.trim().toUpperCase();
+  const destino = document.getElementById('destino').value.trim().toUpperCase();
+
+  if(!origen || !destino){
+    renderResult('unknown','Atención','Faltan datos','Introduce el código del jarabe actual y del siguiente.');
+    return;
+  }
+
+  const oInfo = index[origen];
+  const dInfo = index[destino];
+
+  if(!oInfo || !dInfo){
+    const faltantes = [!oInfo?origen:null, !dInfo?destino:null].filter(Boolean).join(', ');
+    renderResult('unknown','Código no encontrado','No se puede determinar la limpieza',
+      `El código <b>${faltantes}</b> no está en la base de datos de esta herramienta. Consultar el documento LL/10 original o avisar para añadirlo.`);
+    return;
+  }
+
+  const notes = [];
+  if(oInfo.sg.notes && oInfo.sg.notes[origen]) notes.push(`<b>${origen}</b> (actual): ${oInfo.sg.notes[origen]}`);
+  if(dInfo.sg.notes && dInfo.sg.notes[destino]) notes.push(`<b>${destino}</b> (siguiente): ${dInfo.sg.notes[destino]}`);
+  if(oInfo.sg.groupNote) notes.push(`Grupo "${oInfo.sg.category} ${oInfo.sg.label}": ${oInfo.sg.groupNote}`);
+  if(dInfo.sg.id !== oInfo.sg.id && dInfo.sg.groupNote) notes.push(`Grupo "${dInfo.sg.category} ${dInfo.sg.label}": ${dInfo.sg.groupNote}`);
+
+  const tipoAzucar = dInfo.sg.isLight ? 'acidez' : 'brix';
+
+  // 1. REGLA: Mismo Subgrupo y Evaluación Direccional por Flechas
+  if(oInfo.sg.id === dInfo.sg.id){
+    const rel = findLinkPath(oInfo.sg, oInfo.boxId, dInfo.boxId);
+    
+    // Mismo recuadro o avance en la dirección de la flechas -> ESCURRIDO
+    if(rel === 'same' || rel === 'forward'){
+      renderResult('ok', 'Escurrido', `Cambio escurrido ${tipoAzucar}`,
+        `<b>${origen} → ${destino}</b>: Transición en el mismo recuadro o siguiendo la dirección de las flechas ($\rightarrow$). Requiere únicamente <b>escurrido bien</b> del premix y la llenadora. Nunca empujar un producto con otro.`, notes);
+      return;
+    }
+    
+    // Sentido contrario a las flechas -> LAVADO
+    if(rel === 'reverse'){
+      renderResult('warn', `Lavado ${tipoAzucar}`, `Cambio lavado ${tipoAzucar}`,
+        `<b>${origen} → ${destino}</b>: Transición en <b>sentido contrario a las flechas ($\leftarrow$)</b>. Al ir en sentido inverso, no aplica escurrido y se debe realizar <b>Cambio lavado ${tipoAzucar}</b>.`, notes);
+      return;
+    }
+  }
+
+  // 2. REGLA CIP ENERGÉTICO O PASO A ENERGÉTICO / POSTOBÓN / LIMA-LIMÓN
+  const esPaseAEnergetico = !oInfo.isEnergy && dInfo.isEnergy;
+  const esSalidaDeEnergetico = oInfo.isEnergy && !dInfo.isEnergy;
+  const esLimaLimon = dInfo.sg.category === 'Lima-Limón';
+  const esPostobon = (oInfo.sg.id === 'postobon' || dInfo.sg.id === 'postobon') && (oInfo.sg.id !== dInfo.sg.id);
+
+  if(esPaseAEnergetico || esSalidaDeEnergetico){
+    renderResult('danger', 'CIP Energética/Vino', `Cambio CIP Energética/Vino (${tipoAzucar})`,
+      `<b>${origen} → ${destino}</b>: Transición relacionada con producto de perfil energético. Se debe hacer **CIP SOSA 5 pasos (CIP Energética/Vino)**.`, notes);
+    return;
+  }
+
+  if(esLimaLimon || esPostobon){
+    renderResult('danger', 'CIP Estándar/Refresco', `Cambio CIP estandar/refresco (${tipoAzucar})`,
+      `<b>${origen} → ${destino}</b>: Requiere realización de **CIP 5 pasos con sosa (CIP Estándar/Refresco)**.`, notes);
+    return;
+  }
+
+  // 3. REGLAS GENERALES DE LAVADOS
+  renderResult('warn', `Lavado ${tipoAzucar}`, `Cambio lavado ${tipoAzucar}`,
+    `<b>${origen} → ${destino}</b>: Realizar **Cambio lavado ${tipoAzucar}** (Limpieza Máquinas en automático con agua). Revisa las observaciones por si requiere agua caliente o filtros específicos.`, notes);
+}
+</script>
+</body>
+</html>
