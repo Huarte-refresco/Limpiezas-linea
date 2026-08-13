@@ -87,7 +87,7 @@
 <body>
 <header>
   <h1>Limpieza Llenadora–Premix L9</h1>
-  <p>Ref. documento LL/10 · Ed. 217 (26/06/2026) · Refresco Marcilla</p>
+  <p>Ref. documento LL/10 · Ed. 218 (30/06/2026) · Refresco Marcilla</p>
 </header>
 
 <div class="container">
@@ -117,12 +117,12 @@
 
 <script>
 // ---------------------------------------------------------------
-// BASE DE DATOS extraída de LL/10 Ed.217 + Marcas de Perfil Energético / Light
+// BASE DE DATOS extraída de LL/10 Ed.218 + Marcas de Perfil Energético / Light
 // ---------------------------------------------------------------
 const subgroups = [
   {id:'colas_a', category:'Colas', label:'a) Light', isLight:true, multiBox:true,
     boxes:[
-      {id:0, codes:['G001387','G000772','G000849','G000811']},
+      {id:0, codes:['G001387','G000772','G000849','G000811','G001629']},
       {id:1, codes:['G000881','G001352']},
       {id:2, codes:['G000024','G000540','G000670','G001389']},
       {id:3, codes:['G001585']},
@@ -138,18 +138,18 @@ const subgroups = [
       {id:2, codes:['G000461']},
       {id:3, codes:['G000460']},
     ],
-    links:[[0,1],[0,2],[1,3],[2,3]]
+    links:[[0,1],[1,3]]
   },
-  {id:'naranjas_c', category:'Naranjas', label:'c) Light', isLight:true, multiBox:true,
+  {id:'naranjas_c', category:'Naranjas', label:'c) Light', isLight:true, multiBox:true, isJuice:true,
     boxes:[
       {id:0, codes:['G000905','G001154','G001180','G001632','G000683','G000889']},
       {id:1, codes:['G000522','G000765','G000773','G000797']},
       {id:2, codes:['G000761']},
       {id:3, codes:['G000372','G001191','G001433']},
     ],
-    links:[[0,1],[1,2]]
+    links:[[0,1],[1,2],[3,1]]
   },
-  {id:'naranjas_d', category:'Naranjas', label:'d) Normal', isLight:false, multiBox:true,
+  {id:'naranjas_d', category:'Naranjas', label:'d) Normal', isLight:false, multiBox:true, isJuice:true,
     boxes:[
       {id:0, codes:['G000057']},
       {id:1, codes:['G001190']},
@@ -159,17 +159,17 @@ const subgroups = [
       {id:5, codes:['G001490']},
       {id:6, codes:['G000752','G001167','G001518','G001631']},
     ],
-    links:[[0,1],[1,2],[1,3],[3,4],[4,5]],
+    links:[[0,1],[1,2],[1,3],[3,4],[4,1],[4,5]],
     notes:{
       'G001490':'Para salir de este jarabe: lavado con agua caliente. NO poner filtro en la llenadora.'
     }
   },
-  {id:'limones_e', category:'Limones', label:'e) Light', isLight:true, multiBox:true,
+  {id:'limones_e', category:'Limones', label:'e) Light', isLight:true, multiBox:true, isJuice:true,
     boxes:[{id:0, codes:['G001182']},{id:1, codes:['G001634','G000601','G000762']}],
     links:[[0,1]]
   },
-  {id:'limones_f', category:'Limones', label:'f) Normal', isLight:false, multiBox:true,
-    boxes:[{id:0, codes:['G000251']},{id:1, codes:['G000714','G000268','G000822','G000856','G000753','G001106','G000892','G001160','G001519','G001181','G001633','G001321','G001345']}],
+  {id:'limones_f', category:'Limones', label:'f) Normal', isLight:false, multiBox:true, isJuice:true,
+    boxes:[{id:0, codes:['G000251']},{id:1, codes:['G000714','G000268','G000822','G000856','G000753','G001106','G001160','G001181','G001633','G001321','G001345']},{id:2, codes:['G000892','G001519']}],
     links:[[0,1]]
   },
   {id:'tonica_g', category:'Tónica', label:'g)', isLight:false, multiBox:true,
@@ -273,8 +273,15 @@ const subgroups = [
   },
   {id:'fresa_light', category:'Fresa Light', label:'AB)', isLight:true, multiBox:false, boxes:[{id:0, codes:['G001427']}]},
   {id:'fresa_lima_light', category:'Fresa-Lima Light', label:'AC)', isLight:true, multiBox:false, boxes:[{id:0, codes:['G001548']}]},
-  {id:'postobon', category:'Postobón', label:'AD)', isLight:false, multiBox:false,
-    boxes:[{id:0, codes:['G000708','G001336','G001541','G000709','G000832','G000831','G001626','G000833','G000884','G000883','G000885','G000903','G000904']}],
+  {id:'postobon', category:'Postobón', label:'AD)', isLight:false, multiBox:true,
+    boxes:[
+      {id:0, codes:['G000708','G000832','G000884']},
+      {id:1, codes:['G001336']},
+      {id:2, codes:['G000831','G000883','G000903','G000904']},
+      {id:3, codes:['G001541','G001626']},
+      {id:4, codes:['G000709','G000833','G000885']}
+    ],
+    links:[[1,2]],
     groupNote:'Para ENTRAR y SALIR de Postobón: siempre CIP completo sosa 5 pasos. Lavado agua fría solo entre sabores Postobón siguiendo orden Manzana-Colombiana-Tamarindo-Kola-Uva.'
   },
   {id:'manzana', category:'Manzana', label:'AE)', isLight:false, multiBox:false,
@@ -418,6 +425,17 @@ function consultar(){
   if(dInfo.sg.notes && dInfo.sg.notes[destino]) notes.push(`<b>${destino}</b> (siguiente): ${dInfo.sg.notes[destino]}`);
   if(oInfo.sg.groupNote) notes.push(`Grupo "${oInfo.sg.category} ${oInfo.sg.label}": ${oInfo.sg.groupNote}`);
   if(dInfo.sg.id !== oInfo.sg.id && dInfo.sg.groupNote) notes.push(`Grupo "${dInfo.sg.category} ${dInfo.sg.label}": ${dInfo.sg.groupNote}`);
+
+  // -----------------------------------------------------------------------------------
+  // NOTA/REGLA DE BOTELLA DE AGUA TRAS LIMPIEZA DE ZUMO (Naranja/Limón)
+  // Comprobamos si el producto de origen es un zumo (Naranja o Limón) y el siguiente no lo es.
+  // -----------------------------------------------------------------------------------
+  const origenEsZumo = !!oInfo.sg.isJuice;
+  const destinoEsZumo = !!dInfo.sg.isJuice;
+
+  if (origenEsZumo && !destinoEsZumo) {
+    notes.push('<b>Control de calidad:</b> Al salir de un producto con zumo (Naranja/Limón) hacia una bebida que no es zumo, <b>es obligatorio llevar una botella de agua a laboratorio justo después de realizar la limpieza</b>.');
+  }
 
   const tipoAzucar = dInfo.sg.isLight ? 'acidez' : 'brix';
 
