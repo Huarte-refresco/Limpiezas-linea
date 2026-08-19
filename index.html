@@ -38,10 +38,17 @@
   /* Layout de botones en paralelo */
   .button-group{
     display:flex;
+    flex-direction:column;
     gap:10px;
+  }
+  .idle-group{
+    display:flex;
+    gap:10px;
+    flex-wrap:wrap;
   }
   .btn{
     flex:1;
+    min-width:130px;
     padding:13px;
     font-size:15px;
     font-weight:700;
@@ -86,7 +93,7 @@
 </head>
 <body>
 <header>
-  <h1>Limpieza Llenadora–Premix L9</h1>
+  <h1>Limpieza Llenadora–Premix </h1>
   <p>Ref. documento LL/10 · Ed. 219 (18/08/2026) · Refresco Marcilla</p>
 </header>
 
@@ -102,9 +109,14 @@
 
     <div class="button-group">
       <button class="btn btn-primary" onclick="consultar()">Consultar limpieza</button>
-      <a class="btn btn-idle" href="https://refresco.sharepoint.com/:x:/r/sites/IBE-PEX-PEXMARCILLA/_layouts/15/Doc.aspx?action=edit&sourcedoc=%7B99c9ebd1-4764-4944-b8ab-bb58f76a2148%7D&wdExp=TEAMS-TREATMENT&web=1&TeamsCID=73d8fc84-c560-4522-8f76-0467530a48b3" target="_blank" rel="noopener">
-        📊 Registrar IDLE
-      </a>
+      <div class="idle-group">
+        <a class="btn btn-idle" href="https://refresco.sharepoint.com/:x:/r/sites/IBE-PEX-PEXMARCILLA/_layouts/15/Doc.aspx?action=edit&sourcedoc=%7B2dbf8a0d-fb17-420d-b893-173095dd747d%7D&wdExp=TEAMS-TREATMENT&web=1" target="_blank" rel="noopener">
+          📊 Rellenar IDLE L8
+        </a>
+        <a class="btn btn-idle" href="https://refresco.sharepoint.com/:x:/r/sites/IBE-PEX-PEXMARCILLA/_layouts/15/Doc.aspx?action=edit&sourcedoc=%7B99c9ebd1-4764-4944-b8ab-bb58f76a2148%7D&wdExp=TEAMS-TREATMENT&web=1" target="_blank" rel="noopener">
+          📊 Rellenar IDLE L9
+        </a>
+      </div>
     </div>
 
     <div id="resultado"></div>
@@ -225,6 +237,111 @@ const PEPSI = {
 // ---------------------------------------------------------------
 // BASE DE DATOS extraída de LL/10 Ed.219 (18/08/2026)
 // ---------------------------------------------------------------
+// ================= TABLA DE PERFIL DE JARABES (Ed.8, Hoja2) =================
+const PERFILES = {
+  "G000428": {profile:"ENERGETICA", desc:"JARABE BEBIDA ENERG. RODEO LIGHT"},
+  "G000462": {profile:"ENERGETICA", desc:"JARABE BEB.ENERGÉTICA REGULAR RODEO F42"},
+  "G000586": {profile:"ENERGETICA", desc:"JARABE BEB.ENERGÉTICA REGULAR EL TORO"},
+  "G000599": {profile:"ENERGETICA", desc:"JARABE MNST ENERGY EXPORT 0,25L HBC-1591"},
+  "G000627": {profile:"ENERGETICA", desc:"JARABE BEB. ENERG. FRUTOS ROJOS CRF"},
+  "G000631": {profile:"ENERGETICA", desc:"JARABE BEB. ENERGETICA CRF X"},
+  "G000678": {profile:"ENERGETICA", desc:"JARABE MONSTER ULTRA ZERO HBC-1834"},
+  "G000699": {profile:"ENERGETICA", desc:"JARABE BEB. ENERGETICA GOLD"},
+  "G000770": {profile:"ENERGETICA", desc:"JARABE BEB. ENERGETICA LIGHT ALDI 25%"},
+  "G000978": {profile:"ENERGETICA", desc:"JARABE ENERGY GUAVA PUNCHED ROCKSTAR 28%"},
+  "G000981": {profile:"ENERGETICA", desc:"JARABE ROCKSTAR PZ ORANGE-MANDARINE"},
+  "G000985": {profile:"ENERGETICA", desc:"JRB G.APPEL-REV.KILL.GINGER ROCKSTAR 28%"},
+  "G001023": {profile:"REFRESCO", desc:"J MONSTER-REIGN-LEMON HDZ-RPE-0014-(20%)"},
+  "G001024": {profile:"REFRESCO", desc:"J MONSTER-REIGN-SOUR APPLE-RPE-0015(20%)"},
+  "G001025": {profile:"REFRESCO", desc:"J MONSTER-REIGN-MELON MANIA-RPE-0013(20%"},
+  "G001026": {profile:"REFRESCO", desc:"J MNSTER-REIGN-RAZZLE BERRY-RPE-0178(20%"},
+  "G001028": {profile:"ENERGETICA", desc:"JARABE ROCKSTAR BAJA MANGO (25%)"},
+  "G001110": {profile:"ENERGETICA", desc:"JARABE ROCKSTAR TROPICAL PUNCHED(16,66%)"},
+  "G001126": {profile:"ENERGETICA", desc:"JARABE ENERGETICA REGULAR RED Z V2 20%"},
+  "G001137": {profile:"ENERGETICA", desc:"JARABE ENERGÉTICA UVA-SANDIA 33,33%"},
+  "G001139": {profile:"REFRESCO", desc:"JARABE BEB. ENERGETICA MANGO 9% - 25%"},
+  "G001142": {profile:"ENERGETICA", desc:"JARABE BEB. ENERGÉTICA REGULAR - 25%"},
+  "G001143": {profile:"ENERGETICA", desc:"JARABE BEB.ENERGÉTICA COCO-PIÑA - 25%"},
+  "G001144": {profile:"REFRESCO", desc:"JRB.BEB. ENER RASPBERRY CHEESECAKE - 25%"},
+  "G001145": {profile:"ENERGETICA", desc:"JARABE ENERGÉTICA FRESA (33,33%) PROEX"},
+  "G001164": {profile:"ENERGETICA", desc:"JRB BEB.ENERGÉTICA REGULAR PROEX -33,33%"},
+  "G001165": {profile:"REFRESCO", desc:"JARABE ENERGÉTICA MORA (33,33%) PROEX"},
+  "G001171": {profile:"REFRESCO", desc:"JR ENER RASPBERRY CHEESECAKE PROEX-25%"},
+  "G001172": {profile:"ENERGETICA", desc:"JARABE MONSTER MANGO LOCO HBC-3580 (25%)"},
+  "G001175": {profile:"ENERGETICA", desc:"JARABE MONSTER MANGO LOCO HBC-3808 (25%)"},
+  "G001176": {profile:"ENERGETICA", desc:"JAR MONSTER PACIFIC PUNCH HBC-3809 (25%)"},
+  "G001177": {profile:"ENERGETICA", desc:"JARABE ENERGY PIÑA-COCO (33,33%) PROEX"},
+  "G001178": {profile:"ENERGETICA", desc:"JARABE ENERGY APPLE-MELON (33,33%) PROEX"},
+  "G001193": {profile:"ENERGETICA", desc:"JARABE ENERGÉTICA REGULAR D LATA MCD 25%"},
+  "G001194": {profile:"ENERGETICA", desc:"JARABE ENERGÉTICA REGULAR D PET MCD 25%"},
+  "G001209": {profile:"ENERGETICA", desc:"JARABE ENERGY MELOCOTÓN (33,33%) PROEX"},
+  "G001215": {profile:"ENERGETICA", desc:"JARABE ENERGÉTICA TORO LOCO - WILD (25%)"},
+  "G001216": {profile:"ENERGETICA", desc:"JARB. ENERGY FRESA-LIMA - ROCKSTAR - 20%"},
+  "G001217": {profile:"ENERGETICA", desc:"JAR. ENERGY SANDIA-KIWI - ROCKSTAR - 20%"},
+  "G001236": {profile:"ENERGETICA", desc:"JAR. ENERGY ORIGINAL ES - ROCKSTAR - 25%"},
+  "G001238": {profile:"ENERGETICA", desc:"JARABE ENERGY HEMP PRICKLY ROCKSTAR  25%"},
+  "G001240": {profile:"REFRESCO", desc:"JARABE B. MANZANA (20%) PROEX"},
+  "G001241": {profile:"REFRESCO", desc:"JARABE B.TROPICAL CG (25%) PROEX"},
+  "G001244": {profile:"ENERGETICA", desc:"JARABE ENERGY KING REGAL 0% SUGARS-FREE"},
+  "G001245": {profile:"ENERGETICA", desc:"JARABE MNST ENERGY EXPORT 0,25L HBC-4056"},
+  "G001246": {profile:"ENERGETICA", desc:"JARABE MONSTER ULTRA ZERO HBC - 2827"},
+  "G001262": {profile:"REFRESCO", desc:"JARABE BEB. ENERGETICA TROPIC 9% - 25%"},
+  "G001263": {profile:"ENERGETICA", desc:"JARABE BEB. ENERGETICA FURIOUS - 20%"},
+  "G001267": {profile:"REFRESCO", desc:"J MONSTER-REIGN-ORANGE D RPE-0120-(20%)"},
+  "G001268": {profile:"REFRESCO", desc:"J MONSTER-REIGN-PEACH FIZ RPE-0117-(20%)"},
+  "G001292": {profile:"REFRESCO", desc:"JARABE ENERGÉTICA COCO (33,33%) PROEX"},
+  "G001295": {profile:"ENERGETICA", desc:"JARABE ROCKSTAR ORIGINAL ES V2 - 25%"},
+  "G001296": {profile:"ENERGETICA", desc:"JARABE ROCKSTAR GUAVA V2"},
+  "G001299": {profile:"ENERGETICA", desc:"JARABE ROCKSTAR ORIGINAL ZERO V2 (16,66%"},
+  "G001305": {profile:"ENERGETICA", desc:"ENERGY ORIGINAL KONG STRONG LIDL (20%)"},
+  "G001315": {profile:"REFRESCO", desc:"JARABE ENERGY WATERMELON ZERO (25%) MCD"},
+  "G001323": {profile:"ENERGETICA", desc:"JARABE GINSENG ENERGY RED Z ALDI  20%"},
+  "G001332": {profile:"REFRESCO", desc:"JARABE REFRESCO FRESA (25%) PROEX"},
+  "G001333": {profile:"REFRESCO", desc:"JARABE REFRESCO MORA (25%) PROEX"},
+  "G001338": {profile:"ENERGETICA", desc:"JARABE MNST ENERGY HALAL MA HBC4421 -20%"},
+  "G001346": {profile:"ENERGETICA", desc:"JARABE ENERGETICA FURIOUS ZERO MCD (25%)"},
+  "G001370": {profile:"REFRESCO", desc:"JARABE REFRESCO CG COTTON CANDY (20%)"},
+  "G001371": {profile:"REFRESCO", desc:"JARABE ENERGÉTICA PERA ZERO (20%)"},
+  "G001373": {profile:"REFRESCO", desc:"JARABE ENERGÉTICA SANDIA MIDCAL (20%)"},
+  "G001374": {profile:"REFRESCO", desc:"JARABE ENERGÉTICA FRESA MIDCAL (20%)"},
+  "G001378": {profile:"ENERGETICA", desc:"ENERGY ORIGINAL V2 KONG STRONG LIDL -20%"},
+  "G001379": {profile:"REFRESCO", desc:"JARABE ENERGÉTICA SANDIA ZERO (20%)"},
+  "G001380": {profile:"REFRESCO", desc:"JARABE ENERGÉTICA MANZANA-MELÓN ZERO 20%"},
+  "G001383": {profile:"REFRESCO", desc:"JARABE REFRESCO CG LIMA-JENGIBRE (20%)"},
+  "G001384": {profile:"REFRESCO", desc:"JARABE REFRESCO CG NARANJA-MANGO (20%)"},
+  "G001385": {profile:"REFRESCO", desc:"JARABE REFRESCO CG MORA-FRAMB-HIBIS(20%)"},
+  "G001396": {profile:"ENERGETICA", desc:"JARABE REFRESCO SABOR ENERGY (25%) PROEX"},
+  "G001399": {profile:"REFRESCO", desc:"JARABE ENERGETICA MANGO -DIA- DOHLER 20%"},
+  "G001413": {profile:"REFRESCO", desc:"JARABE REFRESC FANTASÍA FRESA NATA (20%)"},
+  "G001414": {profile:"REFRESCO", desc:"JARABE FANTASÍA FRESA NATA CAFEINA 20%"},
+  "G001415": {profile:"REFRESCO", desc:"JARABE REFRESC FANTASÍA MELO FRAMB (20%)"},
+  "G001416": {profile:"REFRESCO", desc:"JARABE FANTASÍA MELO FRAMB CAFEINA (20%)"},
+  "G001417": {profile:"REFRESCO", desc:"JARABE REFRESC FANTASÍA CEREZA (20%)"},
+  "G001418": {profile:"REFRESCO", desc:"JARABE REFRESC FANTASÍA PINTALENG (20%)"},
+  "G001463": {profile:"REFRESCO", desc:"JARABE ENERGY MANGO KONG STRONG LIDL (20%)"},
+  "G001522": {profile:"REFRESCO", desc:"JARABE ENERGY KATRINE ZERO (25%)"},
+  "G001426": {profile:"REFRESCO", desc:"JARABE ENERGY MELOCOTÓN-FRAMB ZERO (20%)"},
+  "G001425": {profile:"REFRESCO", desc:"JARABE ENERGY LEMON PIE ZERO (20%)"},
+  "G001481": {profile:"REFRESCO", desc:"JARABE ENERGÉTICA PIÑA ZERO DOHLER (20%)"},
+  "G001496": {profile:"REFRESCO", desc:"JARABE REFRESCO LIMA-JENGIBRE CON FIBRA"},
+  "G001497": {profile:"REFRESCO", desc:"JARABE REFRESCO NARANJA-MANGO CON FIBRA"},
+  "G001498": {profile:"REFRESCO", desc:"JARABE BEB. MORA-FRAMB-HIBIS CON FIBRA"},
+  "G001547": {profile:"REFRESCO", desc:"JARABE EMERGY TROPICAL ZERO(25%)"},
+  "G001562": {profile:"REFRESCO", desc:"JARABE ENERGY PROEX FRAMBUESA (25%)"},
+  "G001561": {profile:"REFRESCO", desc:"JARABE ENERGY  PROEX BANANA(25%)"},
+  "G001548": {profile:"REFRESCO", desc:"JARABE ENERGÉTICA SUNSET ZERO (25%)"},
+  "G001427": {profile:"REFRESCO", desc:"JARABE ENERGÉTICA FRESA ZERO (20%)"},
+  "G001549": {profile:"ENERGETICA", desc:"JARABE ENERGÉTICA ZERO ZERO FURIOUS 0,5 LATA  0,5*18"},
+  "G001499": {profile:"ENERGETICA", desc:"MNST 116871 ENE ULTRA ZERO MA 0,5x12 EUC"},
+  "G001480": {profile:"ENERGETICA", desc:"MNST 116776 ENE MANGO LOCO MA 0,5x12 EUC"},
+  "G001552": {profile:"REFRESCO", desc:"JARABE FANTASÍA MORA CAFEINA 20%0,25"},
+  "G001582": {profile:"REFRESCO", desc:"JARABE ENERGETICA BERRIES ZERO HACENDADO"},
+  "G001555": {profile:"REFRESCO", desc:"JARABE GOLDPOW ULTRA WHITE ZERO"},
+  "G001601": {profile:"REFRESCO", desc:"JARABE ENERGY PEACH-GRAPE BCAA ZERO 20%"},
+  "G001621": {profile:"REFRESCO", desc:"Jarabe Melon Zero Mercadona (Proyecto Silvia)"},
+  "G001645": {profile:"REFRESCO", desc:"Jarabe Vitalis Zero Mercadona (Manazana verde)"},
+};
+
 const subgroups = [
   {id:'colas_a', category:'Colas', label:'a) Light', isLight:true, multiBox:true,
     boxes:[
@@ -473,6 +590,31 @@ const MATRIX_FALLBACK_OUT = {
   MONSTER: {otherEnergy: 'Energética No Monster', refresco: 'Refresco'},
   PEPSI:   {otherEnergy: 'Energética\nNo PEPSI',   refresco: 'Refresco'}
 };
+
+// -----------------------------------------------------------------
+// TABLA OFICIAL DE PERFIL DE JARABES (Ed. 8): código -> ENERGETICA | REFRESCO
+// Esta tabla es la fuente autorizada de "es energética" y tiene prioridad
+// sobre cualquier suposición hecha a partir de los grupos del LL/10.
+// Regla: mismo perfil -> lavado (lógica normal); perfil distinto
+// (energética <-> refresco) -> CIP (rama "esPaseAEnergetico"/"esSalidaDeEnergetico").
+// OJO: el nombre del jarabe NO es fiable para deducir el perfil (hay jarabes
+// con "ENERGÉTICA" en el nombre catalogados oficialmente como REFRESCO).
+// -----------------------------------------------------------------
+Object.entries(PERFILES).forEach(([code, info])=>{
+  const isEnergyOficial = info.profile === 'ENERGETICA';
+  if(index[code]){
+    // Código ya conocido (LL/10 o matriz): se corrige/confirma su isEnergy
+    // con el dato oficial, sin tocar el resto de su lógica (recuadros, notas...).
+    index[code] = {...index[code], isEnergy: isEnergyOficial, perfilOficial: info.profile};
+  } else {
+    // Código no visto en ningún otro documento: se registra solo con el perfil.
+    const syntheticSg = {
+      id: 'perfil_'+code, category: info.profile === 'ENERGETICA' ? 'Energética (tabla de perfiles)' : 'Refresco (tabla de perfiles)',
+      label: info.desc, isEnergy: isEnergyOficial, notes:{}, groupNote:''
+    };
+    index[code] = {sg: syntheticSg, boxId: -1, isEnergy: isEnergyOficial, perfilOficial: info.profile};
+  }
+});
 
 const datalist = document.getElementById('codes');
 Object.keys(index).sort().forEach(code=>{
