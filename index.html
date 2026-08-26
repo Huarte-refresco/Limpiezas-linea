@@ -93,8 +93,8 @@
 </head>
 <body>
 <header>
-  <h1>Limpieza Llenadora–Premix </h1>
-  <p>Ref. documento LL/10 · Ed. 219 (18/08/2026) · Refresco Marcilla</p>
+  <h1>Limpieza Llenadora–Premix L9</h1>
+  <p>Ref. documento LL/10 · Ed. 220 (26/08/2026) · Refresco Marcilla</p>
 </header>
 
 <div class="container">
@@ -235,7 +235,7 @@ const PEPSI = {
 };
 
 // ---------------------------------------------------------------
-// BASE DE DATOS extraída de LL/10 Ed.219 (18/08/2026)
+// BASE DE DATOS extraída de LL/10 Ed.220 (26/08/2026)
 // ---------------------------------------------------------------
 // ================= TABLA DE PERFIL DE JARABES (Ed.8, Hoja2) =================
 const PERFILES = {
@@ -391,7 +391,11 @@ const subgroups = [
     links:[[0,1]]
   },
   {id:'limones_f', category:'Limones', label:'f) Normal', isLight:false, multiBox:true, isJuice:true,
-    boxes:[{id:0, codes:['G000251']},{id:1, codes:['G000714','G000268','G000822','G000856','G001106','G001160','G001181','G001633','G001321','G001345']},{id:2, codes:['G000892','G001519']}],
+    boxes:[
+      {id:0, codes:['G000251','G000268']},
+      {id:1, codes:['G000714','G000822','G000856','G001106','G001160','G001181','G001321','G001345']},
+      {id:2, codes:['G000753','G000892','G001519','G001633']}
+    ],
     links:[[0,1]]
   },
   {id:'tonica_g', category:'Tónica', label:'g)', isLight:false, multiBox:true,
@@ -409,7 +413,7 @@ const subgroups = [
     groupNote:'Justo antes de entrar en sabor lima-limón: CIP 5 pasos con sosa a 85ºC.'
   },
   {id:'lima_limon', category:'Lima-Limón', label:'i) Normal', isLight:false, multiBox:false,
-    boxes:[{id:0, codes:['G000330','G000675','G000853','G000802','G001101','G001161','G001466']}],
+    boxes:[{id:0, codes:['G000330','G000675','G000853','G000802','G001101','G001161','G001466','G001613']}],
     groupNote:'Justo antes de entrar en sabor lima-limón: CIP 5 pasos con sosa a 85ºC.'
   },
   {id:'gaseosa', category:'Gaseosa', label:'j)', isLight:true, multiBox:true,
@@ -777,7 +781,7 @@ function consultar(){
   if(dInfo.sg.id !== oInfo.sg.id && dInfo.sg.groupNote) notes.push(`Grupo "${dInfo.sg.category} ${dInfo.sg.label}": ${dInfo.sg.groupNote}`);
 
   // -----------------------------------------------------------------------------------
-  // CONTROL DE CALIDAD - LÍNEA 9 (Ed. 219): Muestra de agua tras Limón / Naranja / Piña
+  // CONTROL DE CALIDAD - LÍNEA 9 (Ed. 220): Muestra de agua tras Limón / Naranja / Piña
   // -----------------------------------------------------------------------------------
   const origenEsZumo = !!oInfo.sg.isJuice;
 
@@ -807,14 +811,16 @@ function consultar(){
   }
 
   // 2. REGLA CIP ENERGÉTICO O PASO A ENERGÉTICO / POSTOBÓN / LIMA-LIMÓN
-  const esPaseAEnergetico = !oInfo.isEnergy && dInfo.isEnergy;
+  // Solo la SALIDA de energética hacia refresco requiere CIP. Entrar en
+  // energética desde un refresco (refresco -> energética) NO requiere CIP,
+  // solo el lavado que corresponda por la lógica normal.
   const esSalidaDeEnergetico = oInfo.isEnergy && !dInfo.isEnergy;
   const esLimaLimon = dInfo.sg.category === 'Lima-Limón';
   const esPostobon = (oInfo.sg.id === 'postobon' || dInfo.sg.id === 'postobon') && (oInfo.sg.id !== dInfo.sg.id);
 
-  if(esPaseAEnergetico || esSalidaDeEnergetico){
+  if(esSalidaDeEnergetico){
     renderResult('danger', 'CIP Energética/Vino', `Cambio CIP Energética/Vino (${tipoAzucar})`,
-      `<b>${origen} → ${destino}</b>: Transición relacionada con producto de perfil energético. Se debe hacer **CIP SOSA 5 pasos (CIP Energética/Vino)**.`, notes);
+      `<b>${origen} → ${destino}</b>: Sales de un producto de perfil <b>energético</b> hacia un producto de perfil <b>refresco</b>. Se debe hacer **CIP SOSA 5 pasos (CIP Energética/Vino)**.`, notes);
     return;
   }
 
