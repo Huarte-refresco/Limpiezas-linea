@@ -131,6 +131,7 @@
   </div>
 </div>
 
+
 <script>
 // ================= MATRIZ MONSTER (LL/17 Ed.11) =================
 const MONSTER = {
@@ -685,53 +686,132 @@ function renderResult(cssClass, badgeText, title, bodyHtml, notesArr){
     </div>`;
 }
 
-// Traduce el tipo normalizado de una celda de matriz Monster/Pepsi a la
-// visualización de la app (color, badge, texto)
-function renderMatrixResult(origen, destino, brandLabel, cell){
-  const detail = cell.detail;
-  let cssClass, badge, title, body;
-  switch(cell.type){
-    case 'same':
-      cssClass='ok'; badge='Mismo producto';
-      title='Sigues en el mismo producto';
-      body=`<b>${origen} → ${destino}</b> son el mismo producto (${brandLabel}). No es un cambio real, pero el documento indica una limpieza periódica: <b>${detail}</b> (mantenimiento del sistema mientras se mantiene el mismo producto).`;
-      break;
-    case 'cold':
-      cssClass='ok'; badge='Agua fría';
-      title='Lavado con agua fría (Limpieza Máquinas)';
-      body=`<b>${origen} → ${destino}</b> (${brandLabel}): según la matriz oficial, hacer <b>lavado con agua fría</b> (limpieza Máquinas, automático).`;
-      break;
-    case 'hot':
-      cssClass='warn'; badge='Agua caliente';
-      title='Lavado con agua caliente';
-      body=`<b>${origen} → ${destino}</b> (${brandLabel}): según la matriz oficial, hacer <b>lavado con agua caliente</b>.`;
-      break;
-    case 'cip3':
-      cssClass='warn'; badge='CIP 3 pasos';
-      title='CIP SOSA 3 pasos';
-      body=`<b>${origen} → ${destino}</b> (${brandLabel}): según la matriz oficial, hacer <b>CIP SOSA 3 pasos</b>.${/cada 72/i.test(detail)?' (Nota: cada 72h de producción continua con el mismo producto, hacer también CIP SOSA 3 pasos de mantenimiento).':''}`;
-      break;
-    case 'cip5':
-      cssClass='danger'; badge='CIP 5 pasos';
-      title='CIP SOSA 5 pasos';
-      body=`<b>${origen} → ${destino}</b> (${brandLabel}): según la matriz oficial, hacer <b>CIP SOSA 5 pasos</b>.`;
-      break;
-    case 'cip5_85':
-      cssClass='danger'; badge='CIP 5 pasos 85ºC';
-      title='CIP SOSA 5 pasos a 85ºC';
-      body=`<b>${origen} → ${destino}</b> (${brandLabel}): según la matriz oficial, hacer <b>CIP SOSA 5 pasos con sosa a 85ºC</b>.`;
-      break;
-    case 'cip5_out':
-      cssClass='danger'; badge='CIP 5 pasos · salida energética';
-      title='CIP SOSA 5 pasos (salida de energética)';
-      body=`<b>${origen} → ${destino}</b> (${brandLabel}): sales de un producto energético hacia un refresco/otro producto. Hacer <b>CIP SOSA 5 pasos (salida energético)</b>.`;
-      break;
-    default:
-      cssClass='unknown'; badge='Ver documento';
-      title=detail;
-      body=`<b>${origen} → ${destino}</b> (${brandLabel}): valor de la matriz: <b>${detail}</b>.`;
+// ===========================================================================
+// EVALUACIÓN PURA DE UNA TRANSICIÓN (sin tocar el DOM) — usada tanto por
+// consultar() como por el optimizador de orden de producción.
+// Devuelve {cost, cssClass, badge, title, body, notes} o null si algún
+// código no se reconoce (en cuyo caso 'unknownCode' indica cuál).
+// Escala de coste (para minimizar al ordenar un run):
+//   0 = escurrido / mismo producto      1 = lavado agua fría
+//   2 = lavado agua caliente            3 = CIP 3 pasos
+//   4 = tipo no clasificado (revisar)   5 = CIP 5 pasos (cualquier variante)
+// ===========================================================================
+function evaluarTransicion(origen, destino){
+  // --- PASO 0: matrices Monster / Pepsi-Rockstar ---
+  const mOrigin = matrixIndex[origen];
+  const mDest = matrixIndex[destino];
+
+  function fromMatrixCell(brandLabel, cell){
+    const detail = cell.detail;
+    const COST = {same:0, cold:1, hot:2, cip3:3, cip5:5, cip5_85:5, cip5_out:5};
+    const BADGE = {same:'Mismo producto', cold:'Agua fría', hot:'Agua caliente', cip3:'CIP 3 pasos',
+      cip5:'CIP 5 pasos', cip5_85:'CIP 5 pasos 85ºC', cip5_out:'CIP 5 pasos · salida energética'};
+    const CSS = {same:'ok', cold:'ok', hot:'warn', cip3:'warn', cip5:'danger', cip5_85:'danger', cip5_out:'danger'};
+    const cost = cost_type_in(COST, cell.type, 4);
+    let title, body;
+    switch(cell.type){
+      case 'same': title='Sigues en el mismo producto';
+        body=`<b>${origen} → ${destino}</b> son el mismo producto (${brandLabel}). No es un cambio real, pero el documento indica una limpieza periódica: <b>${detail}</b>.`; break;
+      case 'cold': title='Lavado con agua fría (Limpieza Máquinas)';
+        body=`<b>${origen} → ${destino}</b> (${brandLabel}): según la matriz oficial, hacer <b>lavado con agua fría</b> (limpieza Máquinas, automático).`; break;
+      case 'hot': title='Lavado con agua caliente';
+        body=`<b>${origen} → ${destino}</b> (${brandLabel}): según la matriz oficial, hacer <b>lavado con agua caliente</b>.`; break;
+      case 'cip3': title='CIP SOSA 3 pasos';
+        body=`<b>${origen} → ${destino}</b> (${brandLabel}): según la matriz oficial, hacer <b>CIP SOSA 3 pasos</b>.${/cada 72/i.test(detail)?' (Nota: cada 72h de producción continua con el mismo producto, hacer también CIP SOSA 3 pasos de mantenimiento).':''}`; break;
+      case 'cip5': title='CIP SOSA 5 pasos';
+        body=`<b>${origen} → ${destino}</b> (${brandLabel}): según la matriz oficial, hacer <b>CIP SOSA 5 pasos</b>.`; break;
+      case 'cip5_85': title='CIP SOSA 5 pasos a 85ºC';
+        body=`<b>${origen} → ${destino}</b> (${brandLabel}): según la matriz oficial, hacer <b>CIP SOSA 5 pasos con sosa a 85ºC</b>.`; break;
+      case 'cip5_out': title='CIP SOSA 5 pasos (salida de energética)';
+        body=`<b>${origen} → ${destino}</b> (${brandLabel}): sales de un producto energético hacia un refresco/otro producto. Hacer <b>CIP SOSA 5 pasos (salida energético)</b>.`; break;
+      default: title=detail;
+        body=`<b>${origen} → ${destino}</b> (${brandLabel}): valor de la matriz: <b>${detail}</b>.`;
+    }
+    return {cost, cssClass: CSS[cell.type]||'unknown', badge: BADGE[cell.type]||'Ver documento', title, body,
+      notes:[`Fuente: matriz oficial ${brandLabel} (no la lógica genérica del LL/10).`]};
   }
-  renderResult(cssClass, badge, title, body, [`Fuente: matriz oficial ${brandLabel} (no la lógica genérica del LL/10).`]);
+  function cost_type_in(map, key, def){ return key in map ? map[key] : def; }
+
+  if(mOrigin){
+    const brandLabel = mOrigin.matrixName === 'MONSTER' ? 'Monster' : 'Pepsi/Rockstar';
+    if(mDest && mDest.matrixName === mOrigin.matrixName){
+      const cell = mOrigin.matrixObj.matrix[mOrigin.productName]?.[mDest.productName];
+      if(cell) return fromMatrixCell(brandLabel, cell);
+    }
+  }
+
+  // -----------------------------------------------------------------------
+  // REGLA: ENTRAR en cualquier jarabe Monster o Pepsi/Rockstar desde
+  // cualquier otro jarabe que no sea de esa misma marca siempre exige CIP
+  // (norma de higiene específica para estas dos marcas). Esta regla tiene
+  // prioridad sobre el resto — incluida la salida "genérica" por columna
+  // de la propia matriz — salvo el caso ya cubierto arriba (mismo brand).
+  // -----------------------------------------------------------------------
+  if(mDest && (!mOrigin || mOrigin.matrixName !== mDest.matrixName)){
+    const brandLabelDest = mDest.matrixName === 'MONSTER' ? 'Monster' : 'Pepsi/Rockstar';
+    return {cost:5, cssClass:'danger', badge:'CIP entrada Monster/Rockstar',
+      title:`Cambio CIP obligatorio: entras en ${brandLabelDest}`,
+      body:`<b>${origen} → ${destino}</b>: entras en un jarabe <b>${brandLabelDest}</b> desde otro jarabe que no es de esa misma marca. Siempre que se entra en un producto Monster o Pepsi/Rockstar desde cualquier otro jarabe se debe hacer <b>CIP SOSA 5 pasos</b>, sin excepción.`,
+      notes:[`Norma específica de entrada a ${brandLabelDest}.`]};
+  }
+
+  if(mOrigin){
+    const brandLabel = mOrigin.matrixName === 'MONSTER' ? 'Monster' : 'Pepsi/Rockstar';
+    if(!mDest){
+      const fb = MATRIX_FALLBACK_OUT[mOrigin.matrixName];
+      const dIsEnergyGeneric = !!(index[destino] && index[destino].isEnergy);
+      const fallbackCol = dIsEnergyGeneric ? fb.otherEnergy : fb.refresco;
+      const cell = mOrigin.matrixObj.matrix[mOrigin.productName]?.[fallbackCol];
+      if(cell) return fromMatrixCell(brandLabel, cell);
+    }
+  }
+
+  const oInfo = index[origen];
+  const dInfo = index[destino];
+  if(!oInfo || !dInfo){
+    return {unknownCode: !oInfo ? origen : destino};
+  }
+
+  const notes = [];
+  if(oInfo.sg.notes && oInfo.sg.notes[origen]) notes.push(`<b>${origen}</b> (actual): ${oInfo.sg.notes[origen]}`);
+  if(dInfo.sg.notes && dInfo.sg.notes[destino]) notes.push(`<b>${destino}</b> (siguiente): ${dInfo.sg.notes[destino]}`);
+  if(oInfo.sg.groupNote) notes.push(`Grupo "${oInfo.sg.category} ${oInfo.sg.label}": ${oInfo.sg.groupNote}`);
+  if(dInfo.sg.id !== oInfo.sg.id && dInfo.sg.groupNote) notes.push(`Grupo "${dInfo.sg.category} ${dInfo.sg.label}": ${dInfo.sg.groupNote}`);
+
+  const origenEsZumo = !!oInfo.sg.isJuice;
+  if(origenEsZumo){
+    notes.push('🧪 <b>Control de Laboratorio (Línea 9):</b> Al pasar de Limón, Naranja o Piña a cualquier otro producto, realizar lavado con agua fría y <b>coger 1 litro de muestra de agua de grifo o de Antón</b> para filtrar en laboratorio y comprobar que no queden restos de color, sabor o pulpa.');
+  }
+
+  const tipoAzucar = dInfo.sg.isLight ? 'acidez' : 'brix';
+
+  if(oInfo.sg.id === dInfo.sg.id){
+    const rel = findLinkPath(oInfo.sg, oInfo.boxId, dInfo.boxId);
+    if(rel === 'same' || rel === 'forward'){
+      return {cost:0, cssClass:'ok', badge:'Escurrido', title:`Cambio escurrido ${tipoAzucar}`,
+        body:`<b>${origen} → ${destino}</b>: Transición en el mismo recuadro o siguiendo la dirección de las flechas. Requiere únicamente <b>escurrido bien</b> del premix y la llenadora. Nunca empujar un producto con otro.`, notes};
+    }
+    if(rel === 'reverse'){
+      return {cost:1, cssClass:'warn', badge:`Lavado ${tipoAzucar}`, title:`Cambio lavado ${tipoAzucar}`,
+        body:`<b>${origen} → ${destino}</b>: Transición en <b>sentido contrario a las flechas</b>. Se debe realizar <b>Cambio lavado ${tipoAzucar}</b>.`, notes};
+    }
+  }
+
+  const esSalidaDeEnergetico = oInfo.isEnergy && !dInfo.isEnergy;
+  const esLimaLimon = dInfo.sg.category === 'Lima-Limón';
+  const esPostobon = (oInfo.sg.id === 'postobon' || dInfo.sg.id === 'postobon') && (oInfo.sg.id !== dInfo.sg.id);
+
+  if(esSalidaDeEnergetico){
+    return {cost:5, cssClass:'danger', badge:'CIP Energética/Vino', title:`Cambio CIP Energética/Vino (${tipoAzucar})`,
+      body:`<b>${origen} → ${destino}</b>: Sales de un producto de perfil <b>energético</b> hacia un producto de perfil <b>refresco</b>. Se debe hacer <b>CIP SOSA 5 pasos (CIP Energética/Vino)</b>.`, notes};
+  }
+  if(esLimaLimon || esPostobon){
+    return {cost:5, cssClass:'danger', badge:'CIP Estándar/Refresco', title:`Cambio CIP estandar/refresco (${tipoAzucar})`,
+      body:`<b>${origen} → ${destino}</b>: Requiere realización de <b>CIP 5 pasos con sosa (CIP Estándar/Refresco)</b>.`, notes};
+  }
+
+  return {cost:1, cssClass:'warn', badge:`Lavado ${tipoAzucar}`, title:`Cambio lavado ${tipoAzucar}`,
+    body:`<b>${origen} → ${destino}</b>: Realizar <b>Cambio lavado ${tipoAzucar}</b> (Limpieza Máquinas en automático con agua). Revisa las observaciones por si requiere agua caliente o filtros específicos.`, notes};
 }
 
 function consultar(){
@@ -743,101 +823,15 @@ function consultar(){
     return;
   }
 
-  // -----------------------------------------------------------------------
-  // PASO 0: matrices Monster / Pepsi-Rockstar (prioridad sobre el LL/10)
-  // -----------------------------------------------------------------------
-  const mOrigin = matrixIndex[origen];
-  const mDest = matrixIndex[destino];
-
-  if(mOrigin){
-    const brandLabel = mOrigin.matrixName === 'MONSTER' ? 'Monster' : 'Pepsi/Rockstar';
-
-    // Caso 1: ambos códigos en la MISMA matriz -> lookup directo
-    if(mDest && mDest.matrixName === mOrigin.matrixName){
-      const cell = mOrigin.matrixObj.matrix[mOrigin.productName]?.[mDest.productName];
-      if(cell){ renderMatrixResult(origen, destino, brandLabel, cell); return; }
-    }
-
-    // Caso 2: destino fuera de esta matriz (otra marca energética, o no energética)
-    if(!mDest || mDest.matrixName !== mOrigin.matrixName){
-      const fb = MATRIX_FALLBACK_OUT[mOrigin.matrixName];
-      const dIsEnergyGeneric = !!mDest || !!(index[destino] && index[destino].isEnergy);
-      const fallbackCol = dIsEnergyGeneric ? fb.otherEnergy : fb.refresco;
-      const cell = mOrigin.matrixObj.matrix[mOrigin.productName]?.[fallbackCol];
-      if(cell){ renderMatrixResult(origen, destino, brandLabel, cell); return; }
-    }
-  }
-
-  const oInfo = index[origen];
-  const dInfo = index[destino];
-
-  if(!oInfo || !dInfo){
-    const faltantes = [!oInfo?origen:null, !dInfo?destino:null].filter(Boolean).join(', ');
+  const r = evaluarTransicion(origen, destino);
+  if(r.unknownCode){
     renderResult('unknown','Código no encontrado','No se puede determinar la limpieza',
-      `El código <b>${faltantes}</b> no está en la base de datos de esta herramienta (ni en LL/10, ni en Monster, ni en Pepsi/Rockstar). Consultar el documento original o avisar para añadirlo.`);
+      `El código <b>${r.unknownCode}</b> no está en la base de datos de esta herramienta (ni en LL/10, ni en Monster, ni en Pepsi/Rockstar). Consultar el documento original o avisar para añadirlo.`);
     return;
   }
-
-  const notes = [];
-  if(oInfo.sg.notes && oInfo.sg.notes[origen]) notes.push(`<b>${origen}</b> (actual): ${oInfo.sg.notes[origen]}`);
-  if(dInfo.sg.notes && dInfo.sg.notes[destino]) notes.push(`<b>${destino}</b> (siguiente): ${dInfo.sg.notes[destino]}`);
-  if(oInfo.sg.groupNote) notes.push(`Grupo "${oInfo.sg.category} ${oInfo.sg.label}": ${oInfo.sg.groupNote}`);
-  if(dInfo.sg.id !== oInfo.sg.id && dInfo.sg.groupNote) notes.push(`Grupo "${dInfo.sg.category} ${dInfo.sg.label}": ${dInfo.sg.groupNote}`);
-
-  // -----------------------------------------------------------------------------------
-  // CONTROL DE CALIDAD - LÍNEA 9 (Ed. 220): Muestra de agua tras Limón / Naranja / Piña
-  // -----------------------------------------------------------------------------------
-  const origenEsZumo = !!oInfo.sg.isJuice;
-
-  if (origenEsZumo) {
-    notes.push('🧪 <b>Control de Laboratorio (Línea 9):</b> Al pasar de Limón, Naranja o Piña a cualquier otro producto, realizar lavado con agua fría y <b>coger 1 litro de muestra de agua de grifo o de Antón</b> para filtrar en laboratorio y comprobar que no queden restos de color, sabor o pulpa.');
-  }
-
-  const tipoAzucar = dInfo.sg.isLight ? 'acidez' : 'brix';
-
-  // 1. REGLA: Mismo Subgrupo y Evaluación Direccional por Flechas
-  if(oInfo.sg.id === dInfo.sg.id){
-    const rel = findLinkPath(oInfo.sg, oInfo.boxId, dInfo.boxId);
-    
-    // Mismo recuadro o avance en la dirección de las flechas -> ESCURRIDO
-    if(rel === 'same' || rel === 'forward'){
-      renderResult('ok', 'Escurrido', `Cambio escurrido ${tipoAzucar}`,
-        `<b>${origen} → ${destino}</b>: Transición en el mismo recuadro o siguiendo la dirección de las flechas ($\rightarrow$). Requiere únicamente <b>escurrido bien</b> del premix y la llenadora. Nunca empujar un producto con otro.`, notes);
-      return;
-    }
-    
-    // Sentido contrario a las flechas -> LAVADO
-    if(rel === 'reverse'){
-      renderResult('warn', `Lavado ${tipoAzucar}`, `Cambio lavado ${tipoAzucar}`,
-        `<b>${origen} → ${destino}</b>: Transición en <b>sentido contrario a las flechas ($\leftarrow$)</b>. Al ir en sentido inverso, no aplica escurrido y se debe realizar <b>Cambio lavado ${tipoAzucar}</b>.`, notes);
-      return;
-    }
-  }
-
-  // 2. REGLA CIP ENERGÉTICO O PASO A ENERGÉTICO / POSTOBÓN / LIMA-LIMÓN
-  // Solo la SALIDA de energética hacia refresco requiere CIP. Entrar en
-  // energética desde un refresco (refresco -> energética) NO requiere CIP,
-  // solo el lavado que corresponda por la lógica normal.
-  const esSalidaDeEnergetico = oInfo.isEnergy && !dInfo.isEnergy;
-  const esLimaLimon = dInfo.sg.category === 'Lima-Limón';
-  const esPostobon = (oInfo.sg.id === 'postobon' || dInfo.sg.id === 'postobon') && (oInfo.sg.id !== dInfo.sg.id);
-
-  if(esSalidaDeEnergetico){
-    renderResult('danger', 'CIP Energética/Vino', `Cambio CIP Energética/Vino (${tipoAzucar})`,
-      `<b>${origen} → ${destino}</b>: Sales de un producto de perfil <b>energético</b> hacia un producto de perfil <b>refresco</b>. Se debe hacer **CIP SOSA 5 pasos (CIP Energética/Vino)**.`, notes);
-    return;
-  }
-
-  if(esLimaLimon || esPostobon){
-    renderResult('danger', 'CIP Estándar/Refresco', `Cambio CIP estandar/refresco (${tipoAzucar})`,
-      `<b>${origen} → ${destino}</b>: Requiere realización de **CIP 5 pasos con sosa (CIP Estándar/Refresco)**.`, notes);
-    return;
-  }
-
-  // 3. REGLAS GENERALES DE LAVADOS
-  renderResult('warn', `Lavado ${tipoAzucar}`, `Cambio lavado ${tipoAzucar}`,
-    `<b>${origen} → ${destino}</b>: Realizar **Cambio lavado ${tipoAzucar}** (Limpieza Máquinas en automático con agua). Revisa las observaciones por si requiere agua caliente o filtros específicos.`, notes);
+  renderResult(r.cssClass, r.badge, r.title, r.body, r.notes);
 }
+
 </script>
 </body>
 </html>
