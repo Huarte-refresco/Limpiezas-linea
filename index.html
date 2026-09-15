@@ -436,14 +436,22 @@ const subgroups = [
   {id:'energetica', category:'Bebida Energética', label:'m)', isEnergy:true, isLight:false, multiBox:false,
     boxes:[{id:0, codes:['G001142','G000627','G000749','G000824','G001147','G001432']}],
     notes:{
-      'G000627':'Para salir de este jarabe: CIP SOSA 5 pasos.',
-      'G000749':'Para salir de este jarabe: CIP SOSA 5 pasos.',
-      'G000824':'Para salir de este jarabe: CIP SOSA 5 pasos.',
-      'G001147':'Para salir de este jarabe: CIP SOSA 5 pasos.',
-      'G001432':'Para salir de este jarabe: CIP SOSA 5 pasos.',
+      'G000627':'Para salir de este jarabe: CIP SOSA 5 pasos (a otra energética fuera de este grupo, o a un refresco).',
+      'G000749':'Para salir de este jarabe: CIP SOSA 5 pasos (a otra energética fuera de este grupo, o a un refresco).',
+      'G000824':'Para salir de este jarabe: CIP SOSA 5 pasos (a otra energética fuera de este grupo, o a un refresco).',
+      'G001147':'Para salir de este jarabe: CIP SOSA 5 pasos (a otra energética fuera de este grupo, o a un refresco).',
+      'G001432':'Para salir de este jarabe: CIP SOSA 5 pasos (a otra energética fuera de este grupo, o a un refresco).',
       'G001142':'Producto HALAL: para ENTRAR, hacer siempre CIP SOSA 3 pasos.'
     },
-    groupNote:'Para pasar de una energética a otra: limpieza con agua fría (automático). De energética a cualquier OTRO producto: CIP SOSA 5 pasos.'
+    groupNote:'Entre estas energéticas: lavado agua fría. Para pasar de una energética a otra fuera de este grupo: limpieza agua fría (automático). De energética a cualquier OTRO producto (refresco): CIP SOSA 5 pasos.',
+    exitOverride:{
+      'G000627':{cost:1, cssClass:'warn', badge:'Lavado agua fría', title:'Cambio lavado agua fría', body:'Entre estas energéticas el documento pide solo lavado con agua fría (el CIP SOSA 5 pasos es al salir hacia fuera de este grupo).'},
+      'G000749':{cost:1, cssClass:'warn', badge:'Lavado agua fría', title:'Cambio lavado agua fría', body:'Entre estas energéticas el documento pide solo lavado con agua fría (el CIP SOSA 5 pasos es al salir hacia fuera de este grupo).'},
+      'G000824':{cost:1, cssClass:'warn', badge:'Lavado agua fría', title:'Cambio lavado agua fría', body:'Entre estas energéticas el documento pide solo lavado con agua fría (el CIP SOSA 5 pasos es al salir hacia fuera de este grupo).'},
+      'G001147':{cost:1, cssClass:'warn', badge:'Lavado agua fría', title:'Cambio lavado agua fría', body:'Entre estas energéticas el documento pide solo lavado con agua fría (el CIP SOSA 5 pasos es al salir hacia fuera de este grupo).'},
+      'G001432':{cost:1, cssClass:'warn', badge:'Lavado agua fría', title:'Cambio lavado agua fría', body:'Entre estas energéticas el documento pide solo lavado con agua fría (el CIP SOSA 5 pasos es al salir hacia fuera de este grupo).'},
+      'G001142':{cost:1, cssClass:'warn', badge:'Lavado agua fría', title:'Cambio lavado agua fría', body:'Entre estas energéticas el documento pide solo lavado con agua fría.'}
+    }
   },
   {id:'mango', category:'Bebida Mango', label:'n)', isLight:false, multiBox:false,
     boxes:[{id:0, codes:['G001399','G001123','G001139','G001262','G001463']}],
@@ -485,7 +493,11 @@ const subgroups = [
   {id:'pina_zero', category:'Piña Zero', label:'v)', isLight:true, isEnergy:true, isJuice:true, multiBox:false, boxes:[{id:0, codes:['G001481']}]},
   {id:'pina_coco', category:'Piña-Coco', label:'V)', isLight:false, multiBox:false,
     boxes:[{id:0, codes:['G001143','G001177']}],
-    groupNote:'Para salir de G001143 o G001177: lavado agua caliente. Entre ellos: lavado cambio de sabor.'
+    groupNote:'Para salir de G001143 o G001177 hacia fuera de este grupo: lavado agua caliente. Entre ellos dos: lavado cambio de sabor.',
+    exitOverride:{
+      'G001143':{cost:1, cssClass:'warn', badge:'Lavado cambio de sabor', title:'Cambio lavado (cambio de sabor)', body:'Entre G001143 y G001177 el documento pide un lavado de cambio de sabor (el agua caliente es al salir hacia fuera de este grupo).'},
+      'G001177':{cost:1, cssClass:'warn', badge:'Lavado cambio de sabor', title:'Cambio lavado (cambio de sabor)', body:'Entre G001143 y G001177 el documento pide un lavado de cambio de sabor (el agua caliente es al salir hacia fuera de este grupo).'}
+    }
   },
   {id:'melocoton', category:'Melocotón', label:'W)', isLight:false, multiBox:false,
     boxes:[{id:0, codes:['G001209']}],
@@ -534,7 +546,15 @@ const subgroups = [
   },
   {id:'naturis', category:'Naturis Refresco', label:'AK)', isLight:false, multiBox:false,
     boxes:[{id:0, codes:['G001383','G001496','G001385','G001384','G001498','G001497']}],
-    groupNote:'Para salir G001383/G001496: agua fría. Para salir G001385/G001384/G001497/G001498: agua caliente.'
+    groupNote:'Para salir G001383/G001496: agua fría. Para salir G001385/G001384/G001497/G001498: agua caliente.',
+    exitOverride:{
+      'G001383':{cost:1, cssClass:'warn', badge:'Lavado agua fría', title:'Cambio lavado agua fría', body:'Sales de G001383: según el documento, lavado con agua fría (aunque sea a otro Naturis).'},
+      'G001496':{cost:1, cssClass:'warn', badge:'Lavado agua fría', title:'Cambio lavado agua fría', body:'Sales de G001496: según el documento, lavado con agua fría (aunque sea a otro Naturis).'},
+      'G001385':{cost:2, cssClass:'warn', badge:'Lavado agua caliente', title:'Cambio lavado agua caliente', body:'Sales de G001385: según el documento, lavado con agua caliente (aunque sea a otro Naturis).'},
+      'G001384':{cost:2, cssClass:'warn', badge:'Lavado agua caliente', title:'Cambio lavado agua caliente', body:'Sales de G001384: según el documento, lavado con agua caliente (aunque sea a otro Naturis).'},
+      'G001498':{cost:2, cssClass:'warn', badge:'Lavado agua caliente', title:'Cambio lavado agua caliente', body:'Sales de G001498: según el documento, lavado con agua caliente (aunque sea a otro Naturis).'},
+      'G001497':{cost:2, cssClass:'warn', badge:'Lavado agua caliente', title:'Cambio lavado agua caliente', body:'Sales de G001497: según el documento, lavado con agua caliente (aunque sea a otro Naturis).'}
+    }
   },
   {id:'manzana_melon', category:'Manzana-Melón', label:'AL)', isLight:false, multiBox:false,
     boxes:[{id:0, codes:['G001380']}],
@@ -786,6 +806,16 @@ function evaluarTransicion(origen, destino){
   const tipoAzucar = dInfo.sg.isLight ? 'acidez' : 'brix';
 
   if(oInfo.sg.id === dInfo.sg.id){
+    // Excepción: algunos jarabes tienen una regla de salida específica (distinta
+    // según de qué código concreto se sale) que el documento aplica INCLUSO entre
+    // códigos del mismo grupo/recuadro — no basta con "escurrir". Esto tiene
+    // prioridad sobre el resultado por defecto de mismo-recuadro/flecha.
+    const ov = oInfo.sg.exitOverride && oInfo.sg.exitOverride[origen];
+    if(ov){
+      return {cost: ov.cost, cssClass: ov.cssClass, badge: ov.badge, title: ov.title,
+        body: `<b>${origen} → ${destino}</b>: ${ov.body}`, notes};
+    }
+
     const rel = findLinkPath(oInfo.sg, oInfo.boxId, dInfo.boxId);
     if(rel === 'same' || rel === 'forward'){
       return {cost:0, cssClass:'ok', badge:'Escurrido', title:`Cambio escurrido ${tipoAzucar}`,
